@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:title="颜色">
+        <menu>
+            <group>
+            <item
+                android:id="@+id/red"
+                android:title="红色"
+                />
+            <item
+                android:id="@+id/green"
+                android:title="绿色"
+                />
+            <item
+                android:id="@+id/blud"
+                android:title="蓝色"
+                />
+            </group>
+        </menu>
+    </item>
+    <item android:id="@+id/putong"
+        android:title="普通菜单项"
+        />
+    <item
+        android:title="Activity">
+        <menu>
+            <item android:id="@+id/activity"
+                android:title="activity"/>
+        </menu>
+    </item>
+</menu>
