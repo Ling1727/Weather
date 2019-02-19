@@ -6,6 +6,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -15,6 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Created by hasee on 2019/2/16.
@@ -30,7 +36,29 @@ public class LoadingData {
     //从网上获取天气数据
     public void getWeatherDateForNet(String city){
         final String website="http://wthrcdn.etouch.cn/WeatherApi?citykey="+city;
+        //1.创建OkHttpClient对象
+        OkHttpClient okHttpClient = new OkHttpClient();
+        //2.创建Request对象，设置一个url地址（百度地址）,设置请求方式。
+        Request request = new Request.Builder().url(website).method("GET",null).build();
+        //3.创建一个call对象,参数就是Request请求对象
+        final Call call = okHttpClient.newCall(request);
+        //4.同步调用会阻塞主线程,这边在子线程进行
         new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    //同步调用,返回Response,会抛出IO异常
+                    Response response = call.execute();
+                    xmlData=response.body().string();
+                    Log.d("new",xmlData);
+                    parseXML(xmlData);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        /*new Thread(new Runnable() {
             @Override
             public void run() {
                 HttpURLConnection urlConnection = null;
@@ -53,7 +81,7 @@ public class LoadingData {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        }).start();*/
     }
 
     //解析xml
