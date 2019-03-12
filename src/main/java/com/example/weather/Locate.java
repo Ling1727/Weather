@@ -73,12 +73,10 @@ public class Locate {
               city=bdLocation.getCity();
                 if(!(city==null))
             {
-                //int x = city.indexOf("市");
-                String y1 = city.substring(0,city.length()-1);
-                setCityName(y1);
+                setCityName(city);
                 run=true;
             }
-                Log.d("new",city);
+                Log.d("new",city+"无语");
             }
         }
 

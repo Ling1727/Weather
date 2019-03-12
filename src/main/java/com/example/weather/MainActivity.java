@@ -1,39 +1,27 @@
 package com.example.weather;
 
-import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Space;
 import android.widget.TextView;
-import android.widget.Toast;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import useless.DataBase;
 
 public class MainActivity extends AppCompatActivity {
     private Toolbar toolbar;
@@ -41,22 +29,16 @@ public class MainActivity extends AppCompatActivity {
     private int hight;
     //状态栏高度
     private int stateHight;
-    private LinearLayout llFirst,llDown,llWelcome;
-    private Space space1;
-    private ViewPager vpWelcome;
-    private List<View> views=new ArrayList<View>();
-    private Button button;
-    private View iv1,iv2;
-    private RelativeLayout rlWelcome;
-    private static final int BAIDU_READ_PHONE_STATE =100;
-    private String city="101010100";
-    LoadingData loadingData;
+    CityApi cityApi;
     Locate locate;
     DataBase dataBase;
     private boolean isLacate=false;
-    private List<Map> data;
-    private TextView tvWundu,tvFeng,tvHint,tvWeather0,tvWundu0,tvTomorrow,tvWeather1,tvWundu1,tvTitle;
-    private ImageView ivWeather0,ivWeather1;
+    private List<Map> data=new ArrayList<>();
+    private ViewPager vp1;
+    private List<Fragment> fragmentList;
+    FragmentAdapter fragmentAdapter;
+    private TextView tvTitle;
+    private String city;
 
 
     @Override
@@ -66,16 +48,22 @@ public class MainActivity extends AppCompatActivity {
         //获取屏幕、状态栏高度
         hight=windowHight();
         stateHight=getStateBar();
-        loadingData=new LoadingData();
+        cityApi=new CityApi();
         dataBase=new DataBase(MainActivity.this);
         locate=new Locate(getContext());
-        //获取权限
-        showContacts();
-        handler.sendEmptyMessage(0);
         welcome();
+        handler.sendEmptyMessage(0);
         UIThing();
     }
 
+    public void welcome(){
+        SharedPreferences sp = getSharedPreferences("set", 0);
+        Boolean isWelcome = sp.getBoolean("iswelcome", true);
+        if(isWelcome){
+            Intent intent=new Intent(MainActivity.this,WelcomeActivity.class);
+            startActivity(intent);
+        }
+    }
 
     Handler handler=new Handler(){
         @Override
@@ -84,9 +72,6 @@ public class MainActivity extends AppCompatActivity {
                 case 0:
                     if(isLacate){
                         locate.runTask();
-                        if(!dataBase.getOver()){
-                            dataBase.date();
-                        }
                         handler.removeMessages(0);
                         handler.sendEmptyMessage(1);
                     }else{
@@ -96,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case 1:
-                    if(locate.getRun()&&dataBase.getOver()){
-                        loadingData.getWeatherDateForNet(dataBase.number(locate.getCityName()));
+                    if(locate.getRun()){
+                        cityApi.getWeatherDateForNet(locate.getCityName());
                         Log.d("new",locate.getCityName()+"定位城市");
                         locate.setRun(false);
                         handler.removeMessages(1);
@@ -107,18 +92,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case 2:
-                    if(loadingData.getIsFinish()){
-                        data=loadingData.getList();
-                        loadingData.setIsFinish(false);
+                    if(cityApi.getOver()){
+                        Log.d("test","哈哈哈");
+                        setData(cityApi.getMap());
+                        cityApi.setOver(false);
                         handler.removeMessages(2);
-                        handler.sendEmptyMessage(3);
                         Log.d("new",data.toString());
                     }else{
                         handler.sendEmptyMessageDelayed(2,100);
                     }
                     break;
                 case 3:
-                    initData();
+                    cityApi.getWeatherDateForNet(city);
+                    handler.sendEmptyMessage(2);
                     break;
             }
 
@@ -167,221 +153,89 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-
-        llFirst=findViewById(R.id.llFirst);
-        space1=findViewById(R.id.space1);
-        space1.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,(hight-stateHight)/2));
-        llDown=findViewById(R.id.llDown);
-        llDown.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,hight-stateHight-40-(hight-stateHight)/2));
-    }
-
-    //欢迎界面
-    public void welcome(){
-        SharedPreferences sp= getSharedPreferences("set", 0);
-        Boolean isWelcome = sp.getBoolean("iswelcome", true);
-        iv1=findViewById(R.id.iv1);
-        iv2=findViewById(R.id.iv2);
-        if(isWelcome){
-            vpWelcome=findViewById(R.id.vpWelcome);
-            llWelcome=findViewById(R.id.llWelcome);
-            rlWelcome=findViewById(R.id.rlWelcome);
-            LayoutInflater inflater=getLayoutInflater().from(this);
-            views.add(inflater.inflate(R.layout.viewpager_1,null));
-            views.add(inflater.inflate(R.layout.viewpager_2,null));
-            Log.d("new",views.size()+"");
-            views.get(1).findViewById(R.id.btWelcome).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    rlWelcome.setVisibility(View.GONE);
-                    SharedPreferences sp= getSharedPreferences("set", 0);
-                    SharedPreferences.Editor editor1=sp.edit();
-                    editor1.putBoolean("iswelcome",false);
-                    editor1.commit();
-                }
-            });
-            vpWelcome.setAdapter(new ViewPagerAdapter(views));
-            vpWelcome.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-                @Override
-                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                }
-                @Override
-                public void onPageSelected(int position) {
-                        if(position==0){
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                                iv1.setBackgroundColor(Color.RED);
-                                iv2.setBackgroundColor(Color.parseColor("#dfdedf"));
-                            }
-                        }else {
-                            iv2.setBackgroundColor(Color.RED);
-                            iv1.setBackgroundColor(Color.parseColor("#dfdedf"));
-                        }
-                }
-                @Override
-                public void onPageScrollStateChanged(int state) {
-                }
-            });
-        }else{
-            iv1.setVisibility(View.GONE);
-            iv2.setVisibility(View.GONE);
-        }
-    }
-
-    //动态获取权限
-    public void showContacts(){
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getApplicationContext(),"没有权限,请手动开启定位权限",Toast.LENGTH_SHORT).show();
-            // 申请一个（或多个）权限，并提供用于回调返回的获取码（用户定义）
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.READ_PHONE_STATE},
-                    BAIDU_READ_PHONE_STATE);
-        }
-    }
-    //Android6.0申请权限的回调方法
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            // requestCode即所声明的权限获取码，在checkSelfPermission时传入
-            case BAIDU_READ_PHONE_STATE:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // 获取到权限，作相应处理（调用定位SDK应当确保相关权限均被授权，否则可能引起定位失败）
-                    SharedPreferences sp= getSharedPreferences("set", 0);
-                    SharedPreferences.Editor editor1=sp.edit();
-                    editor1.putBoolean("isLacate",true);
-                    editor1.commit();
-                } else {
-                    // 没有获取到权限，做特殊处理
-                    Toast.makeText(getApplicationContext(), "获取位置权限失败，请手动开启", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            default:
-                break;
-        }
-    }
-    public void initData(){
-        String fengxiang,type,fengli;
-         Calendar date = Calendar.getInstance();
-         date.setTime(strToDate(data.get(0).get("updatetime")+""));
-         Calendar end = Calendar.getInstance();
-         end.setTime(strToDate("18:30"));
-        if (date.before(end)) {
-            fengxiang=data.get(0).get("fengxiang_1")+"";
-            type=data.get(0).get("type_0")+"";
-            fengli=data.get(0).get("fengli_1")+"";
-        }else{
-            fengxiang=data.get(0).get("fengxiang_2")+"";
-            type=data.get(0).get("type_1")+"";
-            fengli=data.get(0).get("fengli_2")+"";
-        }
-
-        tvWundu=findViewById(R.id.tvWendu);
-        tvFeng=findViewById(R.id.tvFeng);
-        tvHint=findViewById(R.id.tvHint);
-        tvWeather0=findViewById(R.id.tvWeather0);
-        tvWundu0=findViewById(R.id.tvWundu0);
-        tvTomorrow=findViewById(R.id.tvTomorrow);
-        tvWeather1=findViewById(R.id.tvWeather1);
-        tvWundu1=findViewById(R.id.tvWudu1);
         tvTitle=findViewById(R.id.tvTitle);
-        tvWundu.setText(data.get(0).get("wendu")+"°");
-        tvFeng.setText(fengxiang+" "+fengli+" 湿度"+data.get(0).get("shidu")+"…");
-        tvHint.setText(data.get(0).get("date_1")+" "+data.get(0).get("date_0"));
-        tvWeather0.setText(type);
-        tvWundu0.setText(data.get(0).get("low_1")+"/"+data.get(0).get("high"));
-        tvTomorrow.setText(data.get(1).get("date_0")+"");
-        tvWeather1.setText(data.get(1).get("type_0")+"");
-        tvWundu1.setText(data.get(1).get("low_1")+"/"+data.get(1).get("high"));
-        tvTitle.setText(data.get(0).get("city")+"");
+        tvTitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(MainActivity.this,CityChoseActivity.class);
+                startActivityForResult(intent,001);
+                vp1.setCurrentItem(fragmentList.size()-1);
+            }
+        });
 
-        ivWeather0=findViewById(R.id.ivWeather0);
-        ivWeather1=findViewById(R.id.ivWeather1);
-        List<ImageView> li=new ArrayList<>();
-        li.add(ivWeather0);
-        li.add(ivWeather1);
-        String[] x=new String[]{type,data.get(1).get("type_0")+""};
-        for(int i=0;i<2;i++) {
-            switch (x[i]) {
-                case "晴":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_sunnny);
+        vp1=findViewById(R.id.vp1);
+        fragmentList=new ArrayList<>();
+        WeatherFragment weatherFragment=new WeatherFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt("Hight",hight);
+        bundle.putInt("StateHight",stateHight);
+        weatherFragment.setArguments(bundle);
+        fragmentList.add(weatherFragment);
+        FragmentManager fm=getSupportFragmentManager();
+        fragmentAdapter=new FragmentAdapter(fm,fragmentList);
+        vp1.setAdapter(fragmentAdapter);
+        vp1.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                tvTitle.setText(data.get(position).get("city")+"");
+                WeatherFragment weatherFragment=(WeatherFragment) fragmentList.get(position);
+                weatherFragment.initData(data.get(position));
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+    }
+
+    public void setData(Map map){
+        Boolean no=true;
+        if(data.size()==0){
+            data.add(map);
+            WeatherFragment weatherFragment=(WeatherFragment) fragmentList.get(0);
+            weatherFragment.initData(data.get(0));
+            tvTitle.setText(data.get(0).get("city")+"");
+        }else{
+            for(int i=0;i<data.size();i++){
+                if(data.get(i).get("city").equals(map.get("city"))){
+                    data.set(i,map);
+                    no=false;
+                    WeatherFragment weatherFragment=(WeatherFragment) fragmentList.get(i);
+                    weatherFragment.initData(data.get(i));
                     break;
-                case "阴":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_overcast);
-                    break;
-                case "多云":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_clound);
-                    break;
-                case "小雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_rain);
-                    break;
-                case "大雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_heavyrain);
-                    break;
-                case "暴雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_rainstorm);
-                    break;
-                case "中雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_moderaterain);
-                    break;
-                case "阵雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_daytimesnow);
-                    break;
-                case "雷阵雨":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_thundershower);
-                    break;
-                case "雨夹雪":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_sleet);
-                    break;
-                case "小雪":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_snow);
-                    break;
-                case "中雪":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_morderatesnow);
-                    break;
-                case "暴雪":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_snowstorm);
-                    break;
-                case "大雪":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_heavysnow);
-                    break;
-                case "雾":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_help);
-                    break;
-                case "冰雹":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_help);
-                    break;
-                case "沙尘暴":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_sandstorm);
-                    break;
-                case "雾霾":
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_haze);
-                    break;
-                default:
-                    li.get(i).setImageResource(R.drawable.forecast_notification_bar_icon_help);
-                    break;
+                }
+            }
+            if(no){
+                    WeatherFragment weatherFragment=new WeatherFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("Hight",hight);
+                    bundle.putInt("StateHight",stateHight);
+                    weatherFragment.setArguments(bundle);
+                    fragmentList.add(weatherFragment);
+                    fragmentAdapter.notifyDataSetChanged();
+                    data.add(map);
+                    weatherFragment.initData(map);
             }
         }
     }
-
-
-        public static Date strToDate(String str) {
-            SimpleDateFormat sdf = new SimpleDateFormat("mm:ss");
-            Date date = null;
-            try {
-                   date = sdf.parse(str);
-             } catch (ParseException e) {
-             }
-             return date;
-             }
 
     private Context getContext(){
         return getApplicationContext();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode==001&&resultCode==001){
+            city=data.getExtras().getString("result");
+            if(!(city==null)){
+                handler.sendEmptyMessage(3);
+            }
+        }
+    }
 }
