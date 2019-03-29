@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<litepal>
+    <dbname value="Weather"></dbname>
+    <version value="2"></version>
+    <list>
+        <mapping class="com.example.weather.litepal.WeatherData"></mapping>
+        <mapping class="com.example.weather.litepal.Exponent"/>
+        <mapping class="com.example.weather.litepal.Daily"/>
+        <mapping class="com.example.weather.litepal.Hourly"/>
+    </list>
+</litepal>

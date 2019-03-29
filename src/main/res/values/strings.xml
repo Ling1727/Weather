@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">weather</string>
+    <string name="up_date">loading...</string>
+    <string name="seven_days_forecast">七天预报</string>
+    <string name="today">今天</string>
+    <string name="excellent">优</string>
 </resources>
