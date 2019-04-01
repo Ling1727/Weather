@@ -9,6 +9,7 @@ import java.io.Serializable;
  */
 
 public class Daily extends LitePalSupport implements Serializable{
+    private String type;
     private String city; //城市
     private String data;
     private String week;
@@ -25,6 +26,15 @@ public class Daily extends LitePalSupport implements Serializable{
     private String day_winddirect;
     private String day_windpower;
     private String quality;
+
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     public String getQuality() {
         return quality;
@@ -157,7 +167,8 @@ public class Daily extends LitePalSupport implements Serializable{
     @Override
     public String toString() {
         return "Daily{" +
-                "city='" + city + '\'' +
+                "type='" + type + '\'' +
+                ", city='" + city + '\'' +
                 ", data='" + data + '\'' +
                 ", week='" + week + '\'' +
                 ", sunrise='" + sunrise + '\'' +

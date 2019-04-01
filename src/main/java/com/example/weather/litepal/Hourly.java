@@ -9,11 +9,20 @@ import java.io.Serializable;
  */
 
 public class Hourly extends LitePalSupport implements Serializable{
+    private String type;
     private String city;
     private String time;
     private String weather;
     private String temp;
     private String img;
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     public String getCity() {
         return city;
@@ -58,7 +67,8 @@ public class Hourly extends LitePalSupport implements Serializable{
     @Override
     public String toString() {
         return "Hourly{" +
-                "city='" + city + '\'' +
+                "type='" + type + '\'' +
+                ", city='" + city + '\'' +
                 ", time='" + time + '\'' +
                 ", weather='" + weather + '\'' +
                 ", temp='" + temp + '\'' +

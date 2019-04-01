@@ -20,7 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.example.weather.litepal.Daily;
 import com.example.weather.litepal.Exponent;
 import com.example.weather.litepal.Hourly;
@@ -52,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private List<View> point;
     private List<CityApi> cityApiList=new ArrayList<>();
     private List<String> cityList;
+    private List<Boolean> booleanList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,8 +188,19 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if(isover){
                         cityApiList.clear();
-                        loading();
-                        Toast.makeText(MainActivity.this, "更新完成！", Toast.LENGTH_SHORT).show();
+                        boolean boo=true;
+                        for(int a=0;a<booleanList.size();a++){
+                            if(!booleanList.get(a)){
+                                boo=false;
+                                break;
+                            }
+                        }
+                        if(boo){
+                            loading();
+                            Toast.makeText(MainActivity.this, "更新完成！", Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(MainActivity.this, "更新失败！", Toast.LENGTH_SHORT).show();
+                        }
                         llLoading.setVisibility(View.GONE);
                     }else {
                         handler.sendEmptyMessageDelayed(4,100);
@@ -316,10 +327,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void upData(){
         if(!(weatherData.size()==0)){
+            booleanList=new ArrayList<>();
             llLoading.setVisibility(View.VISIBLE);
             for(int i=0;i<weatherData.size();i++){
                 CityApi cityApi1=new CityApi();
-                cityApi1.getWeatherDateForNet(weatherData.get(i).getCity());
+                booleanList.add(cityApi1.getWeatherDateForNet(weatherData.get(i).getCity()));
                 cityApiList.add(cityApi1);
             }
             handler.sendEmptyMessage(4);

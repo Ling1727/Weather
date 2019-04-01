@@ -2,7 +2,6 @@ package com.example.weather.tool;
 
 
 import android.util.Log;
-
 import com.example.weather.litepal.Daily;
 import com.example.weather.litepal.Hourly;
 import com.example.weather.litepal.Exponent;
@@ -10,9 +9,12 @@ import com.example.weather.litepal.WeatherData;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.litepal.LitePal;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -24,18 +26,22 @@ import okhttp3.Response;
 
 public class CityApi {
     private String xmlData;
-    private Boolean isOver;
+    private Boolean isOver,isok;
     private WeatherData weatherData;
     private List<WeatherData> weatherDataList;
     private List<Exponent> exponentList;
     private List<Daily> dailyList;
     private List<Hourly> hourlyList;
 
-    public void getWeatherDateForNet(String city){
+    public Boolean getWeatherDateForNet(String city){
+        isok=true;
         isOver=false;
         final String website="http://api.jisuapi.com/weather/query?appkey=2c370c8ab5b36926&city="+city;
         //1.创建OkHttpClient对象
-        OkHttpClient okHttpClient = new OkHttpClient();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().
+                connectTimeout(10, TimeUnit.SECONDS)//设置连接超时时间
+                .readTimeout(20, TimeUnit.SECONDS)//设置读取超时时间
+                .build();
         //2.创建Request对象，设置一个url地址（百度地址）,设置请求方式。
         Request request = new Request.Builder().url(website).method("GET",null).build();
         //3.创建一个call对象,参数就是Request请求对象
@@ -52,10 +58,18 @@ public class CityApi {
                     Get(json);
                     isOver=true;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    if(e.getCause().equals(SocketTimeoutException.class)){//判断超时异常
+                       isok=false;
+                        isOver=true;
+                    }
+                    if(e.getCause().equals(ConnectException.class)){//判断连接异常
+                        isok=false;
+                        isOver=true;
+                    }
                 }
             }
         }).start();
+        return isok;
     }
 
     public void Get(JSONObject json) throws Exception {
@@ -153,6 +167,7 @@ public class CityApi {
                         JSONObject obj = (JSONObject) daily.opt(i);
                         Daily daily1=new Daily();
                         daily1.setCity(resultarr.getString("city"));
+                        daily1.setType(i+"");
                         daily1.setData(obj.getString("date"));
                         daily1.setWeek(obj.getString("week"));
                         daily1.setSunrise(obj.getString("sunrise"));
@@ -177,13 +192,12 @@ public class CityApi {
                         boolean ishave=false;
                         for(int d=0;d<dailyList.size();d++){
                             if(daily1.getCity().equals(dailyList.get(d).getCity())){
-                                Log.d("test",daily1.getCity()+"ap"+dailyList.get(i).getCity());
                                 ishave=true;
                                 break;
                             }
                         }
                         if(ishave){
-                            daily1.updateAll("city=? and date=?",daily1.getCity(),daily1.getData());
+                            daily1.updateAll("city=? and type=?",daily1.getCity(), daily1.getType());
                         }else{
                             daily1.save();
                         }
@@ -194,6 +208,7 @@ public class CityApi {
                     for (int i = 0; i < hourly.size(); i++) {
                         JSONObject obj = (JSONObject) hourly.opt(i);
                         Hourly hourly1=new Hourly();
+                        hourly1.setType(i+"");
                         hourly1.setCity(resultarr.getString("city"));
                         hourly1.setTime(obj.getString("time"));
                         hourly1.setWeather(obj.getString("weather"));
@@ -208,7 +223,7 @@ public class CityApi {
                             }
                         }
                         if(ishave){
-                            hourly1.updateAll("city=? and time=?",hourly1.getCity(),hourly1.getTime());
+                            hourly1.updateAll("city=? and type=?",hourly1.getCity(), hourly1.getType());
                         }else{
                             hourly1.save();
                         }
