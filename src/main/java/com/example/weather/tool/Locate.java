@@ -70,8 +70,10 @@ public class Locate {
             String district = bdLocation.getDistrict();    //获取区县
             String street = bdLocation.getStreet();    //*/
               city=bdLocation.getCity();
-                if(!(city==null))
+            if(!(city==null))
             {
+                city=city.substring(city.length()-1).equals("市")?city.substring(0,city.length()-1):city;
+                Log.d("test4",city.substring(city.length()-2)+"..."+city.substring(0,city.length()-2));
                 setCityName(city);
                 run=true;
             }

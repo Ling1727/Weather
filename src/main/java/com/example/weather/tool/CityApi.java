@@ -34,6 +34,7 @@ public class CityApi {
     private List<Hourly> hourlyList;
 
     public Boolean getWeatherDateForNet(String city){
+
         isok=true;
         isOver=false;
         final String website="http://api.jisuapi.com/weather/query?appkey=2c370c8ab5b36926&city="+city;
@@ -100,6 +101,7 @@ public class CityApi {
                 String updatatime0=(String) resultarr.get("updatetime");
                 String updatatime=updatatime0.substring(11,16);
                 weatherData.setUpdatetime(updatatime);
+                Log.d("test4",weatherData.getUpdatetime()+"");
                 Date date=new Date();
                 SimpleDateFormat sdf=new SimpleDateFormat("hh:mm:ss");
                 weatherData.setTime(sdf.format(date));

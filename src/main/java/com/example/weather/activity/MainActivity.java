@@ -149,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case 1:
                     if(locate.getRun()){
+                        Log.d("test4",locate.getCityName()+"定位城市");
                         cityApi.getWeatherDateForNet(locate.getCityName());
-                        Log.d("new",locate.getCityName()+"定位城市");
                         locate.setRun(false);
                         handler.removeMessages(1);
                         handler.sendEmptyMessage(2);
@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case 2:
                     if(cityApi.getOver()){
-                        Log.d("test","哈哈哈");
+                        Log.d("test4","哈哈哈");
                         weatherData= LitePal.findAll(WeatherData.class);
                         loading();
                         cityApi.setOver(false);
@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void upData(){
-        if(!(weatherData.size()==0)){
+        if(!(weatherData.isEmpty())){
             booleanList=new ArrayList<>();
             llLoading.setVisibility(View.VISIBLE);
             for(int i=0;i<weatherData.size();i++){
