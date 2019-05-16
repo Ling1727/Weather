@@ -38,7 +38,7 @@ import java.util.Map;
  */
 
 public class WeatherFragment extends Fragment {
-    private TextView tvWundu,tvFeng,tvHint,tvWeather0,tvWundu0,tvTomorrow,tvWeather1,tvWundu1,tv16,tv20,tvTime,tv02,tv03,tvName;
+    private TextView tvWundu,tvFeng,tvHint,tvWeather0,tvWundu0,tvTomorrow,tvWeather1,tvWundu1,tv16,tv20,tvTime,tv02,tv03;
     private ImageView ivWeather0,ivWeather1;
     private LinearLayout llDown,llHourly;
     private RelativeLayout space1,rlLine,rlLine2,rlHourly;
@@ -181,14 +181,6 @@ public class WeatherFragment extends Fragment {
             llHourly.addView(new HourlyView(getActivity(),hourlyList.get(y).getWeather(),map.get(hourlyList.get(y).getImg()),width,rlHourly.getMeasuredHeight()));
         }
 
-
-        tvName=view.findViewById(R.id.tvName);
-        tvName.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //tvName.setVisibility(tvName.getVisibility()==View.VISIBLE?View.INVISIBLE:View.VISIBLE);
-            }
-        });
     }
 
     public static Date strToDate(String str) {
